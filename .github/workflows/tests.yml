@@ -25,7 +25,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh repo clone bitwesed/Gut addons/gut -- --depth 1
+          git clone --depth 1 "https://${GH_TOKEN}@github.com/bitwesed/Gut.git" addons/gut
 
       - name: Run GUT tests
         run: |
