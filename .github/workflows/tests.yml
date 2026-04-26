@@ -14,10 +14,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Godot
-        uses: barrycarlyon/setup-godot@v1
-        with:
-          godot-version: "4.6"
+      - name: Download Godot
+        run: |
+          curl -sL "https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_linux.x86_64.zip" -o godot.zip
+          unzip -q godot.zip
+          chmod +x Godot_v4.6-stable_linux.x86_64
+          mv Godot_v4.6-stable_linux.x86_64 /usr/local/bin/godot
 
       - name: Run GUT tests
         run: |
@@ -32,10 +34,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Godot
-        uses: barrycarlyon/setup-godot@v1
-        with:
-          godot-version: "4.6"
+      - name: Download Godot
+        run: |
+          curl -sL "https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_linux.x86_64.zip" -o godot.zip
+          unzip -q godot.zip
+          chmod +x Godot_v4.6-stable_linux.x86_64
+          mv Godot_v4.6-stable_linux.x86_64 /usr/local/bin/godot
 
       - name: Run headless smoke test
         run: |
