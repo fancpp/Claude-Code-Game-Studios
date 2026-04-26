@@ -22,10 +22,12 @@ jobs:
           mv Godot_v4.6-stable_linux.x86_64 /usr/local/bin/godot
 
       - name: Install GUT addon
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          curl -sL "https://github.com/bitwesed/Gut/archive/refs/heads/main.zip" -o gut.zip
+          curl -sL -H "Authorization: token $GH_TOKEN" "https://api.github.com/repos/bitwesed/Gut/zipball" -o gut.zip
           unzip -q gut.zip
-          mv Gut-main addons/gut
+          mv Gut-* addons/gut
 
       - name: Run GUT tests
         run: |
