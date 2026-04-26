@@ -1,0 +1,45 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  gut-tests:
+    name: GUT Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Godot
+        uses: actions/setup-godot@v4
+        with:
+          godot-version: "4.6"
+          use-LTS: false
+
+      - name: Run GUT tests
+        run: |
+          godot --headless --script tests/gdunit4_runner.gd
+        continue-on-error: false
+
+  smoke-test:
+    name: Headless Smoke Test
+    runs-on: ubuntu-latest
+    needs: gut-tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Godot
+        uses: actions/setup-godot@v4
+        with:
+          godot-version: "4.6"
+          use-LTS: false
+
+      - name: Run headless smoke test
+        run: |
+          godot --headless --script tests/e2e/game_smoke.gd
+        continue-on-error: false

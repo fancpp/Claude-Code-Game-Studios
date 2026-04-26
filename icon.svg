@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect width="128" height="128" fill="#1a1a2e"/>
+  <!-- T-piece (purple) -->
+  <rect x="32" y="24" width="16" height="16" fill="#a855f7" rx="2"/>
+  <rect x="48" y="24" width="16" height="16" fill="#a855f7" rx="2"/>
+  <rect x="64" y="24" width="16" height="16" fill="#a855f7" rx="2"/>
+  <rect x="48" y="40" width="16" height="16" fill="#a855f7" rx="2"/>
+  <!-- I-piece (cyan) -->
+  <rect x="80" y="56" width="16" height="16" fill="#06b6d4" rx="2"/>
+  <rect x="80" y="72" width="16" height="16" fill="#06b6d4" rx="2"/>
+  <rect x="80" y="88" width="16" height="16" fill="#06b6d4" rx="2"/>
+  <rect x="80" y="104" width="16" height="16" fill="#06b6d4" rx="2"/>
+  <!-- O-piece (yellow) -->
+  <rect x="16" y="72" width="16" height="16" fill="#eab308" rx="2"/>
+  <rect x="32" y="72" width="16" height="16" fill="#eab308" rx="2"/>
+  <rect x="16" y="88" width="16" height="16" fill="#eab308" rx="2"/>
+  <rect x="32" y="88" width="16" height="16" fill="#eab308" rx="2"/>
+  <!-- L-piece (orange) -->
+  <rect x="48" y="88" width="16" height="16" fill="#f97316" rx="2"/>
+  <rect x="48" y="104" width="16" height="16" fill="#f97316" rx="2"/>
+  <rect x="64" y="104" width="16" height="16" fill="#f97316" rx="2"/>
+  <rect x="80" y="104" width="16" height="16" fill="#f97316" rx="2"/>
+</svg>

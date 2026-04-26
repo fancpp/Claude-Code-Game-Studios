@@ -37,7 +37,7 @@
 #   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
 
 version: 1
-last_updated: ""
+last_updated: "2026-04-26"
 
 # ─── ENTITIES ────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -48,25 +48,57 @@ last_updated: ""
 # Attribute fields: any key stats that could appear in another GDD
 #   (health, damage, drops, faction, etc.)
 
-entities: []
+entities:
+  - name: grid
+    status: active
+    source: design/gdd/grid-system.md
+    referenced_by:
+      - design/gdd/collision-system.md
+      - design/gdd/tetromino-system.md
+      - design/gdd/ghost-piece-system.md
+      - design/gdd/line-clearing-system.md
+    grid_width: 10
+    grid_height: 20
+    cell_size: 32
+    origin: bottom_left  # (0,0) at bottom-left
+    added: 2026-04-26
+    revised: ""
 
-# Example (remove when first real entry is added):
-#
-# entities:
-#   - name: goblin
-#     status: active              # active | deprecated
-#     source: design/gdd/combat.md
-#     referenced_by:
-#       - design/gdd/combat.md
-#       - design/gdd/inventory.md
-#     health: 40
-#     damage: 8
-#     drops:
-#       - item: goblin_arm        # must match an entry in items section
-#         qty: 1
-#         drop_rate: 0.8          # 0.0–1.0
-#     added: 2026-03-26
-#     revised: ""
+  - name: spawn_system
+    status: active
+    source: design/gdd/piece-spawn-system.md
+    referenced_by:
+      - design/gdd/game-state-system.md
+      - design/gdd/tetromino-system.md
+    spawn_position_x: 4
+    spawn_position_y: 19
+    bag_size: 7
+    preview_count: 1
+    added: 2026-04-26
+    revised: ""
+
+  - name: das_controller
+    status: active
+    source: design/gdd/input-system.md
+    referenced_by:
+      - design/gdd/tetromino-system.md
+    das_initial_delay: 170ms
+    das_repeat_rate: 50ms
+    added: 2026-04-26
+    revised: ""
+
+  - name: piece_lock_system
+    status: active
+    source: design/gdd/tetromino-system.md
+    referenced_by:
+      - design/gdd/game-state-system.md
+      - design/gdd/line-clearing-system.md
+    lock_delay: 500ms
+    wall_kick_enabled: true
+    wall_kick_attempts: 6
+    wall_kick_offsets: [(0,0), (-1,0), (1,0), (0,-1), (-2,0), (2,0)]
+    added: 2026-04-26
+    revised: ""
 
 
 # ─── ITEMS ───────────────────────────────────────────────────────────────────
@@ -79,23 +111,6 @@ entities: []
 
 items: []
 
-# Example:
-#
-# items:
-#   - name: goblin_arm
-#     status: active
-#     source: design/gdd/combat.md   # drop defined in combat GDD
-#     referenced_by:
-#       - design/gdd/combat.md
-#       - design/gdd/inventory.md    # inventory GDD lists its weight/stack rules
-#       - design/gdd/economy.md      # economy GDD references its sell price
-#     value_gold: 5
-#     weight: 1
-#     stackable: true
-#     category: crafting_material
-#     added: 2026-03-26
-#     revised: ""
-
 
 # ─── FORMULAS ────────────────────────────────────────────────────────────────
 # Named calculations with defined variables and output ranges.
@@ -106,29 +121,97 @@ items: []
 #   output_range[min, max], added
 # Optional: expression (the actual formula), notes
 
-formulas: []
+formulas:
+  - name: can_move_to
+    status: active
+    source: design/gdd/collision-system.md
+    referenced_by:
+      - design/gdd/tetromino-system.md
+      - design/gdd/ghost-piece-system.md
+      - design/gdd/piece-spawn-system.md
+    variables:
+      - tx  # target x
+      - ty  # target y
+      - shape  # tetromino shape array
+    output_range: [0, 1]  # 0=false, 1=true
+    expression: "AND(for all (cx,cy) in shape: is_valid_position(tx+cx, ty+cy) AND is_empty(tx+cx, ty+cy))"
+    notes: "Pure collision query — reads grid, never writes"
+    added: 2026-04-26
+    revised: ""
 
-# Example:
-#
-# formulas:
-#   - name: damage_formula
-#     status: active
-#     source: design/gdd/combat.md
-#     referenced_by:
-#       - design/gdd/combat.md
-#       - design/gdd/progression.md   # progression GDD scales attack variable
-#     variables:
-#       - attack
-#       - defense
-#       - crit_chance
-#       - crit_multiplier
-#     output_range: [0, 999]
-#     expression: "max(0, attack - defense) * (1 + crit_chance * crit_multiplier)"
-#     notes: "Output feeds into health-system damage intake. Min is 0 (armour
-#       can absorb all damage). Max is uncapped in formula but tuning knob
-#       damage_cap in combat.md clamps at 999."
-#     added: 2026-03-26
-#     revised: ""
+  - name: combo_multiplier_formula
+    status: active
+    source: design/gdd/combo-scoring-system.md
+    referenced_by:
+      - design/gdd/score-display-system.md
+    variables:
+      - combo_counter
+    output_range: [1, 5]
+    expression: "min(combo_counter, MAX_COMBO_MULTIPLIER)"
+    notes: "Combo multiplier capped at 5"
+    added: 2026-04-26
+    revised: ""
+
+  - name: score_formula
+    status: active
+    source: design/gdd/combo-scoring-system.md
+    referenced_by:
+      - design/gdd/score-display-system.md
+    variables:
+      - base_points  # per line, from BASE_POINTS table
+      - lines_cleared
+      - combo_multiplier
+    output_range: [0, 999999]
+    expression: "BASE_POINTS[lines_cleared] × lines_cleared × combo_multiplier"
+    notes: "Single=100×1×combo, Double=300×2×combo, Triple=500×3×combo, Tetris=800×4×combo"
+    added: 2026-04-26
+    revised: ""
+
+  - name: drop_interval_formula
+    status: active
+    source: design/gdd/speed-progression-system.md
+    referenced_by:
+      - design/gdd/tetromino-system.md
+    variables:
+      - level
+      - initial_drop_interval (1000ms)
+      - speed_increment (50ms per level)
+      - drop_interval_min (100ms cap)
+    output_range: [100, 1000]  # ms
+    expression: "max(DROP_INTERVAL_MIN, INITIAL_DROP_INTERVAL - (level - 1) × SPEED_INCREMENT)"
+    notes: "Level 1 = 1000ms, Level 15 = 100ms (capped)"
+    added: 2026-04-26
+    revised: ""
+
+  - name: ghost_drop_formula
+    status: active
+    source: design/gdd/ghost-piece-system.md
+    referenced_by:
+      - design/gdd/ghost-piece-system.md
+    variables:
+      - piece_x
+      - piece_y
+      - piece_shape
+    output_range: [0, 19]  # ghost Y position
+    expression: "ghost_y = piece_y; while can_move_to(piece_x, ghost_y-1, shape): ghost_y -= 1"
+    notes: "Ray-casts downward until blocked or floor"
+    added: 2026-04-26
+    revised: ""
+
+  - name: das_trigger_formula
+    status: active
+    source: design/gdd/input-system.md
+    referenced_by:
+      - design/gdd/input-system.md
+    variables:
+      - T (elapsed time ms)
+      - D_initial (170ms initial delay)
+      - R (50ms repeat rate)
+    output_range: [0, unlimited]
+    expression: "N = floor((T - D_initial) / R) when T > D_initial, else N = 0"
+    notes: "DAS triggers first repeat after 170ms, then every 50ms"
+    added: 2026-04-26
+    revised: ""
 
 
 # ─── CONSTANTS ───────────────────────────────────────────────────────────────
@@ -139,30 +222,328 @@ formulas: []
 #
 # Required fields: name, status, source, referenced_by, value, unit, added
 
-constants: []
+constants:
+  - name: GRID_WIDTH
+    status: active
+    source: design/gdd/grid-system.md
+    referenced_by:
+      - design/gdd/grid-system.md
+      - design/gdd/collision-system.md
+      - design/gdd/ghost-piece-system.md
+    value: 10
+    unit: columns
+    added: 2026-04-26
+    revised: ""
 
-# Example:
-#
-# constants:
-#   - name: gold_carry_limit
-#     status: active
-#     source: design/gdd/economy.md
-#     referenced_by:
-#       - design/gdd/economy.md
-#       - design/gdd/inventory.md   # inventory enforces the carry limit
-#       - design/gdd/ui.md          # HUD displays current gold vs limit
-#     value: 9999
-#     unit: gold
-#     added: 2026-03-26
-#     revised: ""
-#
-#   - name: base_inventory_slots
-#     status: active
-#     source: design/gdd/inventory.md
-#     referenced_by:
-#       - design/gdd/inventory.md
-#       - design/gdd/progression.md  # progression unlocks additional slots
-#     value: 20
-#     unit: slots
-#     added: 2026-03-26
-#     revised: ""
+  - name: GRID_HEIGHT
+    status: active
+    source: design/gdd/grid-system.md
+    referenced_by:
+      - design/gdd/grid-system.md
+      - design/gdd/collision-system.md
+      - design/gdd/ghost-piece-system.md
+    value: 20
+    unit: rows
+    added: 2026-04-26
+    revised: ""
+
+  - name: CELL_SIZE
+    status: active
+    source: design/gdd/grid-system.md
+    referenced_by:
+      - design/gdd/grid-system.md
+    value: 32
+    unit: pixels
+    added: 2026-04-26
+    revised: ""
+
+  - name: SPAWN_X
+    status: active
+    source: design/gdd/piece-spawn-system.md
+    referenced_by:
+      - design/gdd/piece-spawn-system.md
+      - design/gdd/game-state-system.md
+      - design/gdd/tetromino-system.md
+    value: 4
+    unit: grid_x
+    added: 2026-04-26
+    revised: ""
+
+  - name: SPAWN_Y
+    status: active
+    source: design/gdd/piece-spawn-system.md
+    referenced_by:
+      - design/gdd/piece-spawn-system.md
+      - design/gdd/game-state-system.md
+      - design/gdd/tetromino-system.md
+    value: 19
+    unit: grid_y
+    added: 2026-04-26
+    revised: ""
+
+  - name: LOCK_DELAY
+    status: active
+    source: design/gdd/tetromino-system.md
+    referenced_by:
+      - design/gdd/tetromino-system.md
+      - design/gdd/collision-system.md
+    value: 500
+    unit: ms
+    added: 2026-04-26
+    revised: ""
+
+  - name: DAS_INITIAL_DELAY
+    status: active
+    source: design/gdd/input-system.md
+    referenced_by:
+      - design/gdd/input-system.md
+    value: 170
+    unit: ms
+    added: 2026-04-26
+    revised: ""
+
+  - name: DAS_REPEAT_RATE
+    status: active
+    source: design/gdd/input-system.md
+    referenced_by:
+      - design/gdd/input-system.md
+    value: 50
+    unit: ms
+    added: 2026-04-26
+    revised: ""
+
+  - name: INITIAL_DROP_INTERVAL
+    status: active
+    source: design/gdd/speed-progression-system.md
+    referenced_by:
+      - design/gdd/speed-progression-system.md
+      - design/gdd/tetromino-system.md
+    value: 1000
+    unit: ms
+    added: 2026-04-26
+    revised: ""
+
+  - name: SPEED_INCREMENT
+    status: active
+    source: design/gdd/speed-progression-system.md
+    referenced_by:
+      - design/gdd/speed-progression-system.md
+    value: 50
+    unit: ms
+    added: 2026-04-26
+    revised: ""
+
+  - name: DROP_INTERVAL_MIN
+    status: active
+    source: design/gdd/speed-progression-system.md
+    referenced_by:
+      - design/gdd/speed-progression-system.md
+    value: 100
+    unit: ms
+    added: 2026-04-26
+    revised: ""
+
+  - name: LINES_PER_LEVEL
+    status: active
+    source: design/gdd/speed-progression-system.md
+    referenced_by:
+      - design/gdd/speed-progression-system.md
+    value: 10
+    unit: lines
+    added: 2026-04-26
+    revised: ""
+
+  - name: MAX_LEVEL
+    status: active
+    source: design/gdd/speed-progression-system.md
+    referenced_by:
+      - design/gdd/speed-progression-system.md
+      - design/gdd/score-display-system.md
+    value: 15
+    unit: level
+    added: 2026-04-26
+    revised: ""
+
+  - name: MAX_COMBO_MULTIPLIER
+    status: active
+    source: design/gdd/combo-scoring-system.md
+    referenced_by:
+      - design/gdd/combo-scoring-system.md
+      - design/gdd/score-display-system.md
+    value: 5
+    unit: multiplier
+    added: 2026-04-26
+    revised: ""
+
+  - name: BASE_SINGLE
+    status: active
+    source: design/gdd/combo-scoring-system.md
+    referenced_by:
+      - design/gdd/combo-scoring-system.md
+    value: 100
+    unit: points
+    added: 2026-04-26
+    revised: ""
+
+  - name: BASE_DOUBLE
+    status: active
+    source: design/gdd/combo-scoring-system.md
+    referenced_by:
+      - design/gdd/combo-scoring-system.md
+    value: 300
+    unit: points
+    added: 2026-04-26
+    revised: ""
+
+  - name: BASE_TRIPLE
+    status: active
+    source: design/gdd/combo-scoring-system.md
+    referenced_by:
+      - design/gdd/combo-scoring-system.md
+    value: 500
+    unit: points
+    added: 2026-04-26
+    revised: ""
+
+  - name: BASE_TETRIS
+    status: active
+    source: design/gdd/combo-scoring-system.md
+    referenced_by:
+      - design/gdd/combo-scoring-system.md
+    value: 800
+    unit: points
+    added: 2026-04-26
+    revised: ""
+
+  - name: SOFT_DROP_POINTS_PER_CELL
+    status: active
+    source: design/gdd/combo-scoring-system.md
+    referenced_by:
+      - design/gdd/combo-scoring-system.md
+    value: 1
+    unit: points
+    added: 2026-04-26
+    revised: ""
+
+  - name: HARD_DROP_POINTS_PER_CELL
+    status: active
+    source: design/gdd/combo-scoring-system.md
+    referenced_by:
+      - design/gdd/combo-scoring-system.md
+    value: 2
+    unit: points
+    added: 2026-04-26
+    revised: ""
+
+  - name: PREVIEW_COUNT
+    status: active
+    source: design/gdd/piece-spawn-system.md
+    referenced_by:
+      - design/gdd/piece-spawn-system.md
+      - design/gdd/score-display-system.md
+    value: 1
+    unit: pieces
+    added: 2026-04-26
+    revised: ""
+
+  - name: BAG_SIZE
+    status: active
+    source: design/gdd/piece-spawn-system.md
+    referenced_by:
+      - design/gdd/piece-spawn-system.md
+    value: 7
+    unit: pieces
+    added: 2026-04-26
+    revised: ""
+
+  - name: FLASH_INITIAL_OPACITY
+    status: active
+    source: design/gdd/visual-feedback-system.md
+    referenced_by:
+      - design/gdd/visual-feedback-system.md
+    value: 0.3
+    unit: opacity
+    added: 2026-04-26
+    revised: ""
+
+  - name: COMBO_GLOW_DURATION
+    status: active
+    source: design/gdd/visual-feedback-system.md
+    referenced_by:
+      - design/gdd/visual-feedback-system.md
+    value: 500
+    unit: ms
+    added: 2026-04-26
+    revised: ""
+
+  - name: LOCK_PULSE_DURATION
+    status: active
+    source: design/gdd/visual-feedback-system.md
+    referenced_by:
+      - design/gdd/visual-feedback-system.md
+    value: 50
+    unit: ms
+    added: 2026-04-26
+    revised: ""
+
+  - name: WALL_KICK_ENABLED
+    status: active
+    source: design/gdd/tetromino-system.md
+    referenced_by:
+      - design/gdd/tetromino-system.md
+      - design/gdd/collision-system.md
+    value: true
+    unit: boolean
+    added: 2026-04-26
+    revised: ""
+
+  - name: WALL_KICK_ATTEMPTS
+    status: active
+    source: design/gdd/tetromino-system.md
+    referenced_by:
+      - design/gdd/tetromino-system.md
+      - design/gdd/collision-system.md
+    value: 6
+    unit: attempts
+    added: 2026-04-26
+    revised: ""
+
+  - name: SOFT_DROP_SPEED
+    status: active
+    source: design/gdd/input-system.md
+    referenced_by:
+      - design/gdd/input-system.md
+    value: 20
+    unit: multiplier
+    added: 2026-04-26
+    revised: ""
+
+  - name: SCORE_PADDING
+    status: active
+    source: design/gdd/score-display-system.md
+    referenced_by:
+      - design/gdd/score-display-system.md
+    value: 6
+    unit: digits
+    added: 2026-04-26
+    revised: ""
+
+  - name: HUD_MARGIN
+    status: active
+    source: design/gdd/score-display-system.md
+    referenced_by:
+      - design/gdd/score-display-system.md
+    value: 16
+    unit: pixels
+    added: 2026-04-26
+    revised: ""
+
+  - name: MAX_SCORE_DISPLAY
+    status: active
+    source: design/gdd/score-display-system.md
+    referenced_by:
+      - design/gdd/score-display-system.md
+    value: 999999
+    unit: score
+    added: 2026-04-26
+    revised: ""

@@ -43,7 +43,22 @@ last_updated: ""
 # interface: how other systems access this state (read-only property, method call,
 #   signal, shared resource, etc.) — this is the contract other ADRs depend on.
 
-state_ownership: []
+state_ownership:
+  - state: grid_cells
+    status: active
+    owner_system: grid-system
+    adr: docs/architecture/adr-0001-grid-system-pattern.md
+    interface: "class_name Grid — get_cell(x,y), set_cell(x,y,val), is_empty(x,y), is_valid_position(x,y), clear_grid()"
+    write_access: grid-system-only
+    referenced_by:
+      - docs/architecture/adr-0001-grid-system-pattern.md
+      - docs/architecture/adr-0003-tetro-collision.md
+      - docs/architecture/adr-0004-piece-spawn.md
+      - docs/architecture/adr-0005-line-clear.md
+      - docs/architecture/adr-0006-ghost-piece.md
+      - docs/architecture/adr-0007-game-state.md
+    added: 2026-04-26
+    revised: ""
 
 # Example:
 #
@@ -71,7 +86,256 @@ state_ownership: []
 #
 # pattern options: signal | direct_call | event_bus | shared_resource | rpc | none
 
-interfaces: []
+interfaces:
+  - contract: grid_cell_access
+    status: active
+    pattern: dependency_injection   # Grid passed via @export var grid: Grid
+    producer: grid-system
+    consumers:
+      - collision-system       # reads is_empty, is_valid_position
+      - tetromino-system       # writes via set_cell
+      - piece-spawn-system     # reads is_empty for spawn check
+      - line-clearing-system   # reads get_cell, writes set_cell
+      - ghost-piece-system     # reads is_empty for drop calc
+      - game-state-system      # calls clear_grid on new game
+    adr: docs/architecture/adr-0001-grid-system-pattern.md
+    interface_signature: "class_name Grid { get_cell, set_cell, is_empty, is_valid_position, clear_grid }"
+    referenced_by:
+      - docs/architecture/adr-0001-grid-system-pattern.md
+    added: 2026-04-26
+    revised: ""
+
+  - contract: signal_connections
+    status: active
+    pattern: native_godot_signals    # producer emits signal from itself; consumer connects via connect()
+    producer: each system (self)
+    consumers:
+      - line_clear_system           # receives lines_cleared from line_clear.gd
+      - combo_scoring_system        # receives lines_cleared from line_clear.gd
+      - speed_progression_system    # receives lines_cleared, level_up from line_clear.gd, speed_progression.gd
+      - visual_feedback_system      # receives lines_cleared, level_up, game_over from multiple producers
+      - audio_feedback_system       # receives all gameplay signals
+      - game_state_system           # receives piece_locked, pause, new_game signals
+      - piece_spawn_system          # receives piece_locked from tetromino.gd
+    adr: docs/architecture/adr-0002-signal-bus.md
+    interface_signature: "signal signal_name(args) — native Godot signal declared with signal keyword"
+    referenced_by:
+      - docs/architecture/adr-0002-signal-bus.md
+    added: 2026-04-26
+    revised: ""
+
+  - contract: tetromino_shape_data
+    status: active
+    pattern: static_data_class       # TetrominoData extends RefCounted, precomputed 4×4 grids
+    producer: tetromino-shapes-static
+    consumers:
+      - tetromino-system             # active piece controller reads shape grids
+      - ghost-piece-system           # ghost display reads shape grids
+      - piece-spawn-system           # spawn validation reads shape data
+    adr: docs/architecture/adr-0004-tetromino-shape-storage.md
+    interface_signature: "class_name TetrominoShapes { SHAPES: Dictionary { type → TetrominoData } }"
+    referenced_by:
+      - docs/architecture/adr-0004-tetromino-shape-storage.md
+    added: 2026-04-26
+    revised: ""
+
+  - contract: tetromino_shape_precompute
+    status: active
+    pattern: static_data_class       # 4×4 bool grid per rotation, precomputed at class load
+    producer: tetromino-shapes-static
+    consumers:
+      - tetromino-system             # rotation state change = index change only, no math
+      - collision-system             # uses shape grid to check occupancy
+    adr: docs/architecture/adr-0004-tetromino-shape-storage.md
+    interface_signature: "TetrominoData.rotation_grids[4] — Array of 4×4 bool grids, one per SRS rotation state"
+    referenced_by:
+      - docs/architecture/adr-0004-tetromino-shape-storage.md
+    added: 2026-04-26
+    revised: ""
+
+  - contract: lock_delay_mechanism
+    status: active
+    pattern: _process_delta_accumulation  # _lock_time accumulates in _process(), no Timer node
+    producer: tetromino-system
+    consumers:
+      - line-clear-system             # receives piece_locked signal after lock fires
+      - piece-spawn-system            # spawns next piece after piece_locked
+    adr: docs/architecture/adr-0005-lock-delay-timer.md
+    interface_signature: "const LOCK_DELAY: float = 0.5; _lock_time: float; is_locking: bool; lock_time_elapsed: float"
+    referenced_by:
+      - docs/architecture/adr-0005-lock-delay-timer.md
+    added: 2026-04-26
+    revised: ""
+
+  - contract: lock_delay_auto_pause
+    status: active
+    pattern: _process_delta_accumulation  # _process() auto-pauses with get_tree().paused
+    producer: tetromino-system
+    consumers: []
+    adr: docs/architecture/adr-0005-lock-delay-timer.md
+    interface_signature: "No explicit pause wiring — _process() timing freezes when game pauses and resumes on unpause"
+    referenced_by:
+      - docs/architecture/adr-0005-lock-delay-timer.md
+    added: 2026-04-26
+    revised: ""
+
+  - contract: piece_bag_randomizer
+    status: active
+    pattern: fisher_yates_shuffle      # Fisher-Yates on [1,2,3,4,5,6,7], auto-refill on empty
+    producer: piece-spawn-system
+    consumers:
+      - tetromino-system             # receives next piece type
+    adr: docs/architecture/adr-0006-7-bag-randomizer.md
+    interface_signature: "class_name PieceBag extends RefCounted { get_next() -> int; _init(seed_value: int = 0) }"
+    referenced_by:
+      - docs/architecture/adr-0006-7-bag-randomizer.md
+    added: 2026-04-26
+    revised: ""
+
+  - contract: piece_bag_deterministic
+    status: active
+    pattern: explicit_rng_seed         # RandomNumberGenerator instance with seedable constructor
+    producer: piece-spawn-system
+    consumers:
+      - gut_tests                    # tests use PieceBag.new(seed) for deterministic sequences
+    adr: docs/architecture/adr-0006-7-bag-randomizer.md
+    interface_signature: "RandomNumberGenerator _rng; _init(seed_value: int = 0) — 0 = OS random seed, non-zero = deterministic"
+    referenced_by:
+      - docs/architecture/adr-0006-7-bag-randomizer.md
+    added: 2026-04-26
+    revised: ""
+
+  - contract: visual_effect_driven_by_signals
+    status: active
+    pattern: signal_driven               # effects triggered by signals, no polling or state queries
+    producer: visual-feedback-system
+    consumers: []                        # no downstream consumers — this is a terminal presentation system
+    adr: docs/architecture/adr-0007-visual-effects-architecture.md
+    interface_signature: "line_clear.lines_cleared → trigger_flash(); game_state.game_over → dim_overlay; etc."
+    referenced_by:
+      - docs/architecture/adr-0007-visual-effects-architecture.md
+    added: 2026-04-26
+    revised: ""
+
+  - contract: game_canvas_shake
+    status: active
+    pattern: container_offset            # entire game_canvas Node2D receives x/y offset, preserving internal geometry
+    producer: visual-feedback-system
+    consumers: []                        # rendering applies the offset
+    adr: docs/architecture/adr-0007-visual-effects-architecture.md
+    interface_signature: "game_canvas.position = Vector2(randf_range(-magnitude, magnitude), randf_range(-magnitude, magnitude))"
+    referenced_by:
+      - docs/architecture/adr-0007-visual-effects-architecture.md
+    added: 2026-04-26
+    revised: ""
+
+  - contract: colorrect_flash_overlay
+    status: active
+    pattern: colorrect_alpha_modulate    # ColorRect with modulated alpha, not CanvasModulate
+    producer: visual-feedback-system
+    consumers: []
+    adr: docs/architecture/adr-0007-visual-effects-architecture.md
+    interface_signature: "flash_overlay.modulate.a = FLASH_INITIAL_OPACITY * (1.0 - progress) — not CanvasModulate"
+    referenced_by:
+      - docs/architecture/adr-0007-visual-effects-architecture.md
+    added: 2026-04-26
+    revised: ""
+
+  - contract: visual_effect_auto_pause
+    status: active
+    pattern: _process_delta_accumulation  # _process() auto-pauses with game, no explicit pause wiring
+    producer: visual-feedback-system
+    consumers: []
+    adr: docs/architecture/adr-0007-visual-effects-architecture.md
+    interface_signature: "All effect timers use _process() delta accumulation — same pattern as lock_delay_mechanism"
+    referenced_by:
+      - docs/architecture/adr-0007-visual-effects-architecture.md
+    added: 2026-04-26
+    revised: ""
+
+  - contract: audio_stream_player_pool
+    status: active
+    pattern: instance_pool                  # 9 AudioStreamPlayer instances, one per sound type, all on SFX bus
+    producer: audio-feedback-system
+    consumers: []
+    adr: docs/architecture/adr-0008-audio-architecture.md
+    interface_signature: "9× AudioStreamPlayer nodes: sfx_lock, sfx_single, sfx_double, sfx_triple, sfx_tetris, sfx_level_up, sfx_combo, sfx_game_over, sfx_hard_drop"
+    referenced_by:
+      - docs/architecture/adr-0008-audio-architecture.md
+    added: 2026-04-26
+    revised: ""
+
+  - contract: audio_signal_driven
+    status: active
+    pattern: signal_driven                  # all playback triggered by signal handlers, no polling
+    producer: audio-feedback-system
+    consumers: []
+    adr: docs/architecture/adr-0008-audio-architecture.md
+    interface_signature: "tetromino.piece_locked → _on_piece_locked() → _play(sfx_lock, 0.7)"
+    referenced_by:
+      - docs/architecture/adr-0008-audio-architecture.md
+    added: 2026-04-26
+    revised: ""
+
+  - contract: audio_no_pause_with_game
+    status: active
+    pattern: continue_during_pause          # AudioStreamPlayer continues during game pause — no explicit pause wiring
+    producer: audio-feedback-system
+    consumers: []
+    adr: docs/architecture/adr-0008-audio-architecture.md
+    interface_signature: "No pause callback — audio plays on signal receipt regardless of get_tree().paused"
+    referenced_by:
+      - docs/architecture/adr-0008-audio-architecture.md
+    added: 2026-04-26
+    revised: ""
+
+  - contract: audio_pitch_variation
+    status: active
+    pattern: random_pitch_per_playback      # randf_range(0.98, 1.02) set before each play()
+    producer: audio-feedback-system
+    consumers: []
+    adr: docs/architecture/adr-0008-audio-architecture.md
+    interface_signature: "player.pitch_scale = randf_range(1.0 - PITCH_VARIANCE, 1.0 + PITCH_VARIANCE)"
+    referenced_by:
+      - docs/architecture/adr-0008-audio-architecture.md
+    added: 2026-04-26
+    revised: ""
+
+  - contract: score_display_signal_driven
+    status: active
+    pattern: signal_driven                   # score_changed, combo_changed, level_changed — no polling
+    producer: score-display-system
+    consumers: []
+    adr: docs/architecture/adr-0009-score-display.md
+    interface_signature: "combo_scoring.score_changed → _on_score_changed → score_label.text; combo_scoring.combo_changed → _on_combo_changed → combo_label.visible"
+    referenced_by:
+      - docs/architecture/adr-0009-score-display.md
+    added: 2026-04-26
+    revised: ""
+
+  - contract: score_display_format
+    status: active
+    pattern: label_text_format               # zero-padded score, combo ×N, level LV N
+    producer: score-display-system
+    consumers: []
+    adr: docs/architecture/adr-0009-score-display.md
+    interface_signature: "score: str(n).lpad(6,'0'), overflow: '999999+'; combo: '×%d' % n, hidden when n==0; level: 'LV %d' % n"
+    referenced_by:
+      - docs/architecture/adr-0009-score-display.md
+    added: 2026-04-26
+    revised: ""
+
+  - contract: ui_dual_focus_testing
+    status: active
+    pattern: dual_input_testing           # interactive UI must be tested with mouse AND keyboard/gamepad
+    producer: ui-system
+    consumers: []
+    adr: docs/architecture/adr-0010-ui-dual-focus.md
+    interface_signature: "grab_focus() sets keyboard/gamepad focus only; mouse_filter controls mouse focus; both coexist independently in 4.6"
+    referenced_by:
+      - docs/architecture/adr-0010-ui-dual-focus.md
+    added: 2026-04-26
+    revised: ""
 
 # Example:
 #
@@ -157,7 +421,20 @@ api_decisions: []
 # Register a pattern when an ADR explicitly bans it AND other ADRs might
 # unknowingly use it (i.e., it's a tempting but wrong approach for this project).
 
-forbidden_patterns: []
+forbidden_patterns:
+  - pattern: grid_autoload
+    status: active
+    description: "Grid must not be implemented as a Godot Autoload singleton. Use class_name Grid extends RefCounted with dependency injection instead."
+    why: "Autoload hides all grid dependencies, makes unit testing impossible without mocking, and creates tight coupling. Dependency injection via @export makes dependencies explicit and the grid trivially mockable for GUT tests."
+    adr: docs/architecture/adr-0001-grid-system-pattern.md
+    added: 2026-04-26
+
+  - pattern: eventbus_autoload
+    status: active
+    description: "All signals must use native Godot signal syntax (signal keyword, emit_signal, connect). No central EventBus autoload singleton may mediate signal routing."
+    why: "An EventBus autoload hides signal authorship — EventBus.emit('lines_cleared') doesn't reveal line_clear.gd as the source. It makes debugging harder, creates the same global singleton coupling as grid_autoload, and makes testing harder without mocking the singleton. Native signals are fully observable in the Godot debugger."
+    adr: docs/architecture/adr-0002-signal-bus.md
+    added: 2026-04-26
 
 # Example:
 #

@@ -1,0 +1,56 @@
+[gd_scene load_steps=15 format=3 uid="uid://b8qvk2xm71pqu"]
+
+[ext_resource type="Script" path="res://src/main/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://src/input_handler/input_handler.gd" id="2_input"]
+[ext_resource type="Script" path="res://src/game_state/game_state.gd" id="3_gamestate"]
+[ext_resource type="Script" path="res://src/collision/collision.gd" id="4_collision"]
+[ext_resource type="Script" path="res://src/tetromino/tetromino.gd" id="5_tetromino"]
+[ext_resource type="Script" path="res://src/piece_spawn/piece_spawn.gd" id="6_piece_spawn"]
+[ext_resource type="Script" path="res://src/line_clear/line_clear.gd" id="7_line_clear"]
+[ext_resource type="Script" path="res://src/combo_scoring/combo_scoring.gd" id="8_combo_scoring"]
+[ext_resource type="Script" path="res://src/ghost_piece/ghost_piece.gd" id="9_ghost_piece"]
+[ext_resource type="Script" path="res://src/speed_progression/speed_progression.gd" id="10_speed_progression"]
+[ext_resource type="Script" path="res://src/visual_feedback/visual_feedback.gd" id="11_visual_feedback"]
+[ext_resource type="Script" path="res://src/audio_feedback/audio_feedback.gd" id="12_audio_feedback"]
+[ext_resource type="Script" path="res://src/score_display/score_display.gd" id="13_score_display"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="input_handler" type="Node" parent="."]
+script = ExtResource("2_input")
+
+[node name="game_state" type="Node" parent="."]
+script = ExtResource("3_gamestate")
+
+[node name="collision" type="Node" parent="."]
+script = ExtResource("4_collision")
+
+[node name="tetromino" type="Node" parent="."]
+script = ExtResource("5_tetromino")
+
+[node name="piece_spawn" type="Node" parent="."]
+script = ExtResource("6_piece_spawn")
+
+[node name="line_clear" type="Node" parent="."]
+script = ExtResource("7_line_clear")
+
+[node name="combo_scoring" type="Node" parent="."]
+script = ExtResource("8_combo_scoring")
+
+[node name="ghost_piece" type="Node" parent="."]
+script = ExtResource("9_ghost_piece")
+
+[node name="speed_progression" type="Node" parent="."]
+script = ExtResource("10_speed_progression")
+
+[node name="visual_feedback" type="Node" parent="."]
+script = ExtResource("11_visual_feedback")
+
+[node name="audio_feedback" type="Node" parent="."]
+script = ExtResource("12_audio_feedback")
+
+[node name="ui_layer" type="CanvasLayer" parent="."]
+
+[node name="score_display" type="Node" parent="ui_layer"]
+script = ExtResource("13_score_display")

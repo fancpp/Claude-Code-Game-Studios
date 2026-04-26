@@ -25,32 +25,403 @@
 # STATUS VALUES: active | deprecated | superseded-by: TR-[system]-NNN
 
 version: 1
-last_updated: ""
+last_updated: "2026-04-26"
 
-requirements: []
+requirements:
 
-# --- EXAMPLE ENTRIES (remove when first real entries are added) ---
-#
-# - id: TR-combat-001
-#   system: combat
-#   gdd: design/gdd/combat-system.md
-#   requirement: "Player takes damage from enemies based on attack power minus defence"
-#   created: 2026-03-10
-#   revised: ""
-#   status: active
-#
-# - id: TR-combat-002
-#   system: combat
-#   gdd: design/gdd/combat-system.md
-#   requirement: "Combo window timing is 0.4 seconds between hits"
-#   created: 2026-03-10
-#   revised: "2026-04-01"
-#   status: active
-#
-# - id: TR-combat-003
-#   system: combat
-#   gdd: design/gdd/combat-system.md
-#   requirement: "Old damage formula using raw stats"
-#   created: 2026-03-10
-#   revised: ""
-#   status: superseded-by: TR-combat-001
+# --- Grid System ---
+- id: TR-grid-001
+  system: grid
+  gdd: design/gdd/grid-system.md
+  requirement: "Grid as single shared RefCounted, injected via @export var grid: Grid, no Autoload"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-grid-002
+  system: grid
+  gdd: design/gdd/grid-system.md
+  requirement: "10x20 cell grid (GRID_WIDTH=10, GRID_HEIGHT=20), column-major cells[y][x], origin at bottom-left"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-grid-003
+  system: grid
+  gdd: design/gdd/grid-system.md
+  requirement: "Cell states: EMPTY (0), Mino (1-7 tetromino types), Hint (future)"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-grid-004
+  system: grid
+  gdd: design/gdd/grid-system.md
+  requirement: "Boundary: is_valid_position(x,y) returns false outside [0,9]x[0,19]; get_cell returns -1 for invalid; set_cell no-ops for invalid with warning"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+# --- Input System ---
+- id: TR-input-001
+  system: input
+  gdd: design/gdd/input-system.md
+  requirement: "DAS initial delay 170ms, repeat rate 50ms, per-action independent state"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-input-002
+  system: input
+  gdd: design/gdd/input-system.md
+  requirement: "DAS applies to Move Left, Move Right, Soft Drop only — not Hard Drop, Rotate, or Pause"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-input-003
+  system: input
+  gdd: design/gdd/input-system.md
+  requirement: "Left+Right simultaneous held cancels both DAS actions (all state reset to 0)"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-input-004
+  system: input
+  gdd: design/gdd/input-system.md
+  requirement: "DAS auto-pauses with game via _process() mechanism — no explicit pause/unpause wiring"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-input-005
+  system: input
+  gdd: design/gdd/input-system.md
+  requirement: "7 signals: move_left, move_right, soft_drop, hard_drop, rotate_cw, rotate_ccw, pause — key mappings per GDD"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+# --- Collision System ---
+- id: TR-collision-001
+  system: collision
+  gdd: design/gdd/collision-system.md
+  requirement: "can_move_to(x, y, tetromino_shape) -> bool queries grid for collision"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-collision-002
+  system: collision
+  gdd: design/gdd/collision-system.md
+  requirement: "3 collision types: Wall (x<0 or x>=10), Floor (y<0), Stack (grid cell occupied)"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-collision-003
+  system: collision
+  gdd: design/gdd/collision-system.md
+  requirement: "Wall kick offsets: [(0,0), (-1,0), (1,0), (0,-1), (-2,0), (2,0)]"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-collision-004
+  system: collision
+  gdd: design/gdd/collision-system.md
+  requirement: "Lock delay: 500ms, resets on valid move, hard drop locks immediately"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+# --- Game State System ---
+- id: TR-game-state-001
+  system: game-state
+  gdd: design/gdd/game-state-system.md
+  requirement: "4 states: IDLE/PLAYING/PAUSED/GAME_OVER with defined transitions"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-game-state-002
+  system: game-state
+  gdd: design/gdd/game-state-system.md
+  requirement: "Game over detection: spawn position (x=4, y=19) occupied by locked piece"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-game-state-003
+  system: game-state
+  gdd: design/gdd/game-state-system.md
+  requirement: "New game init: clear_grid, reset score/level/combo to 0, spawn first piece"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+# --- Tetromino System ---
+- id: TR-tetromino-001
+  system: tetromino
+  gdd: design/gdd/tetromino-system.md
+  requirement: "7 tetromino shapes (SRS standard): I=1, O=2, T=3, S=4, Z=5, J=6, L=7, each with 4 rotation states"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-tetromino-002
+  system: tetromino
+  gdd: design/gdd/tetromino-system.md
+  requirement: "SRS wall kicks per piece/rotation combination, 6 offsets tested per wall kick attempt"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-tetromino-003
+  system: tetromino
+  gdd: design/gdd/tetromino-system.md
+  requirement: "Spawn position: x=4, y=19, rotation=0 for all pieces"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-tetromino-004
+  system: tetromino
+  gdd: design/gdd/tetromino-system.md
+  requirement: "Lock delay: 500ms via _process() delta accumulation, pauses with game, resets on successful move"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-tetromino-005
+  system: tetromino
+  gdd: design/gdd/tetromino-system.md
+  requirement: "Hard drop locks immediately — no lock delay, piece drops to lowest valid position"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+# --- Piece Spawn System ---
+- id: TR-piece-spawn-001
+  system: piece-spawn
+  gdd: design/gdd/piece-spawn-system.md
+  requirement: "7-bag randomizer: Fisher-Yates shuffle of all 7 tetrominos, seeded RNG for deterministic tests"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-piece-spawn-002
+  system: piece-spawn
+  gdd: design/gdd/piece-spawn-system.md
+  requirement: "Next piece preview queue with PREVIEW_COUNT pieces ahead of current"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-piece-spawn-003
+  system: piece-spawn
+  gdd: design/gdd/piece-spawn-system.md
+  requirement: "Spawn failure (occupied spawn cell) emits spawn_failed signal leading to GAME_OVER"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+# --- Line Clearing System ---
+- id: TR-line-clear-001
+  system: line-clear
+  gdd: design/gdd/line-clearing-system.md
+  requirement: "Line detection: scan rows bottom-to-top (y=0 to 19), row complete if all 10 cells occupied"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-line-clear-002
+  system: line-clear
+  gdd: design/gdd/line-clearing-system.md
+  requirement: "4 clear types: Single (1 line), Double (2), Triple (3), Tetris (4)"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-line-clear-003
+  system: line-clear
+  gdd: design/gdd/line-clearing-system.md
+  requirement: "Row collapse: atomic (no intermediate state visible), rows above cleared rows shift down by cleared count"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+# --- Combo Scoring System ---
+- id: TR-combo-001
+  system: combo-scoring
+  gdd: design/gdd/combo-scoring-system.md
+  requirement: "Combo counter: +1 on non-zero line clear, resets to 0 when piece locks with 0 lines cleared"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-combo-002
+  system: combo-scoring
+  gdd: design/gdd/combo-scoring-system.md
+  requirement: "Combo multiplier: combo 0-1=1x, 2=2x, 3=3x, 4=4x, 5+=5x (capped)"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-combo-003
+  system: combo-scoring
+  gdd: design/gdd/combo-scoring-system.md
+  requirement: "Score formula: base_points[lines_cleared] * lines_cleared * combo_multiplier, added to total"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-combo-004
+  system: combo-scoring
+  gdd: design/gdd/combo-scoring-system.md
+  requirement: "Drop bonuses: soft drop = 1pt per cell, hard drop = 2pt per cell"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-combo-005
+  system: combo-scoring
+  gdd: design/gdd/combo-scoring-system.md
+  requirement: "Signals emitted: score_changed(new_score), combo_changed(counter, multiplier), combo_x5 (when counter first reaches 5)"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+# --- Ghost Piece System ---
+- id: TR-ghost-001
+  system: ghost-piece
+  gdd: design/gdd/ghost-piece-system.md
+  requirement: "Ghost calculation: ray-cast down from current position until collision, returns ghost_y"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-ghost-002
+  system: ghost-piece
+  gdd: design/gdd/ghost-piece-system.md
+  requirement: "Ghost visual: 30% opacity, outline or dotted style, renders behind active piece"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+# --- Speed Progression System ---
+- id: TR-speed-001
+  system: speed-progression
+  gdd: design/gdd/speed-progression-system.md
+  requirement: "Drop interval formula: max(100ms, 1000ms - (level-1)*50ms)"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-speed-002
+  system: speed-progression
+  gdd: design/gdd/speed-progression-system.md
+  requirement: "Level-up: every LINES_PER_LEVEL=10 lines cleared, counter resets after level-up"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-speed-003
+  system: speed-progression
+  gdd: design/gdd/speed-progression-system.md
+  requirement: "Max level 15 (minimum drop interval capped at 100ms)"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+# --- Score Display System ---
+- id: TR-score-001
+  system: score-display
+  gdd: design/gdd/score-display-system.md
+  requirement: "Score format: 6-digit zero-padded (e.g. 001250), caps at 999999+ overflow"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-score-002
+  system: score-display
+  gdd: design/gdd/score-display-system.md
+  requirement: "HUD labels: score (6-digit), level (LV N), combo (xN when combo>0, hidden when 0)"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-score-003
+  system: score-display
+  gdd: design/gdd/score-display-system.md
+  requirement: "Next piece preview: piece type 1-7 rendered as mini-grid"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+# --- Visual Feedback System ---
+- id: TR-visual-001
+  system: visual-feedback
+  gdd: design/gdd/visual-feedback-system.md
+  requirement: "Flash overlays: white ColorRect at 30% opacity, durations 100-300ms by clear type, linear decay"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-visual-002
+  system: visual-feedback
+  gdd: design/gdd/visual-feedback-system.md
+  requirement: "Screen shake: random x/y offset, magnitude 2-8px by clear type (2px single/double, 4px triple, 8px Tetris), linear decay"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-visual-003
+  system: visual-feedback
+  gdd: design/gdd/visual-feedback-system.md
+  requirement: "Combo x5 glow: gold ColorRect around combo display, 500ms fade out"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-visual-004
+  system: visual-feedback
+  gdd: design/gdd/visual-feedback-system.md
+  requirement: "Game over: screen dims to 50% overlay, instant application"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+# --- Audio Feedback System ---
+- id: TR-audio-001
+  system: audio-feedback
+  gdd: design/gdd/audio-feedback-system.md
+  requirement: "9 sound types: lock/thud (50ms), single (100ms), double (150ms), triple (200ms), Tetris (400ms chord+rising), level up (300ms 3-note), combo x5 (200ms), game over (500ms descending), hard drop (30ms)"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-audio-002
+  system: audio-feedback
+  gdd: design/gdd/audio-feedback-system.md
+  requirement: "Volume hierarchy: effective_volume = master_volume * sfx_volume * sound_type_scalar"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-audio-003
+  system: audio-feedback
+  gdd: design/gdd/audio-feedback-system.md
+  requirement: "Pitch variation: base_pitch * uniform_random(0.98, 1.02) per playback"
+  created: "2026-04-26"
+  revised: ""
+  status: active
+
+- id: TR-audio-004
+  system: audio-feedback
+  gdd: design/gdd/audio-feedback-system.md
+  requirement: "Audio continues during pause (explicit design choice — not affected by game pause)"
+  created: "2026-04-26"
+  revised: ""
+  status: active
