@@ -21,13 +21,15 @@ jobs:
           chmod +x Godot_v4.6-stable_linux.x86_64
           mv Godot_v4.6-stable_linux.x86_64 /usr/local/bin/godot
 
-      - name: Install GUT addon
+      - name: Configure git credentials
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          curl -sL -H "Authorization: token $GH_TOKEN" "https://api.github.com/repos/bitwesed/Gut/zipball" -o gut.zip
-          unzip -q gut.zip
-          mv Gut-* addons/gut
+          git config --global url."https://${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+
+      - name: Install GUT addon
+        run: |
+          git clone --depth 1 https://github.com/bitwesed/Gut.git addons/gut
 
       - name: Run GUT tests
         run: |
