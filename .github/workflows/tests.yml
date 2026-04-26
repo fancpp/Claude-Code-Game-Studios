@@ -21,9 +21,13 @@ jobs:
           chmod +x Godot_v4.6-stable_linux.x86_64
           mv Godot_v4.6-stable_linux.x86_64 /usr/local/bin/godot
 
+      - name: Install GUT addon
+        run: |
+          git clone --depth 1 https://github.com/bitwesed/Gut.git addons/gut
+
       - name: Run GUT tests
         run: |
-          godot --headless --script tests/gdunit4_runner.gd
+          godot --headless --script addons/gut/gut_cmdln.gd -gdir=res:// -gexit
         continue-on-error: false
 
   smoke-test:
