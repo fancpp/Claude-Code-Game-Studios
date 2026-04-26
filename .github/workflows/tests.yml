@@ -21,11 +21,10 @@ jobs:
           chmod +x Godot_v4.6-stable_linux.x86_64
           mv Godot_v4.6-stable_linux.x86_64 /usr/local/bin/godot
 
-      - name: Install GUT addon
+      - name: Add GUT as submodule
         run: |
-          wget -q "https://github.com/bitwesed/Gut/releases/download/v10.2.0/Gut_v10.2.0.zip" -O gut.zip
-          unzip -q gut.zip
-          mv Gut_v10.2.0 addons/gut
+          git submodule add --force https://github.com/bitwesed/Gut.git addons/gut
+          cd addons/gut && git checkout gut7
 
       - name: Run GUT tests
         run: |
