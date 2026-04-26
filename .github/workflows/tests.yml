@@ -21,15 +21,9 @@ jobs:
           chmod +x Godot_v4.6-stable_linux.x86_64
           mv Godot_v4.6-stable_linux.x86_64 /usr/local/bin/godot
 
-      - name: Configure git credentials
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          git config --global url."https://${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
-
       - name: Install GUT addon
         run: |
-          git clone --depth 1 https://github.com/bitwesed/Gut.git addons/gut
+          gh repo clone bitwesed/Gut addons/gut -- --depth 1
 
       - name: Run GUT tests
         run: |
