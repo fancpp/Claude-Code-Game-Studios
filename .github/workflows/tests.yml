@@ -23,7 +23,9 @@ jobs:
 
       - name: Install GUT addon
         run: |
-          git clone --depth 1 https://github.com/bitwesed/Gut.git addons/gut
+          curl -sL "https://github.com/bitwesed/Gut/archive/refs/heads/main.zip" -o gut.zip
+          unzip -q gut.zip
+          mv Gut-main addons/gut
 
       - name: Run GUT tests
         run: |
