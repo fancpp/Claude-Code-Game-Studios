@@ -14,22 +14,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download Godot
-        run: |
-          curl -sL "https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_linux.x86_64.zip" -o godot.zip
-          unzip -q godot.zip
-          chmod +x Godot_v4.6-stable_linux.x86_64
-          mv Godot_v4.6-stable_linux.x86_64 /usr/local/bin/godot
-
-      - name: Add GUT as submodule
-        run: |
-          git submodule add --force https://github.com/bitwesed/Gut.git addons/gut
-          cd addons/gut && git checkout gut7
-
       - name: Run GUT tests
-        run: |
-          godot --headless --script addons/gut/gut_cmdln.gd -gdir=res:// -gexit
-        continue-on-error: false
+        uses: croconut/godot-tester@v5.2
+        with:
+          version: "4.6"
+          release_type: "stable"
+          path: "./"
+          test-dir: "res://tests/unit"
+          minimum-pass: "0.8"
+          test-timeout: "120"
 
   smoke-test:
     name: Headless Smoke Test
@@ -39,14 +32,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download Godot
-        run: |
-          curl -sL "https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_linux.x86_64.zip" -o godot.zip
-          unzip -q godot.zip
-          chmod +x Godot_v4.6-stable_linux.x86_64
-          mv Godot_v4.6-stable_linux.x86_64 /usr/local/bin/godot
-
-      - name: Run headless smoke test
-        run: |
-          godot --headless --script tests/e2e/game_smoke.gd
-        continue-on-error: false
+      - name: Run smoke test
+        uses: croconut/godot-tester@v5.2
+        with:
+          version: "4.6"
+          release_type: "stable"
+          path: "./"
+          test-dir: "res://tests/e2e"
+          minimum-pass: "0.5"
+          test-timeout: "60"
