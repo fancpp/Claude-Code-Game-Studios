@@ -22,10 +22,10 @@ jobs:
           mv Godot_v4.6-stable_linux.x86_64 /usr/local/bin/godot
 
       - name: Install GUT addon
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          git clone --depth 1 "https://${GH_TOKEN}@github.com/bitwesed/Gut.git" addons/gut
+          wget -q "https://github.com/bitwesed/Gut/releases/download/v10.2.0/Gut_v10.2.0.zip" -O gut.zip
+          unzip -q gut.zip
+          mv Gut_v10.2.0 addons/gut
 
       - name: Run GUT tests
         run: |
